@@ -20,7 +20,8 @@ const path = require('path'), http = require('http'), fs = require('fs');
   await p.goto(`http://localhost:${port}/altura-proteccion-3d.html?capture${extra}`);
   await p.waitForFunction(() => window.__aq, null, { timeout: 60000 });
   const list = times.length ? times.map(Number) : [...Array(Math.round(10 * fps)).keys()].map(i => i / fps);
-  for (let i = 0; i < list.length; i++) {
+  const i0 = +(process.env.START || 0), i1 = Math.min(list.length, +(process.env.END || list.length));
+  for (let i = i0; i < i1; i++) {
     await p.evaluate(t => window.__aq.render(t), list[i]);
     await p.screenshot({ path: times.length ? `${out}/t_${list[i]}.png` : `${out}/${String(i).padStart(4, '0')}.png` });
   }
