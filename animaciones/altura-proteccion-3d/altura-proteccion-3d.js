@@ -50,6 +50,7 @@ export function create(host, opts = {}) {
     cut: new THREE.MeshStandardMaterial({ color: '#aeb3c1', roughness: .95 }),
     glass: new THREE.MeshStandardMaterial({ color: '#b9c2d2', roughness: .12, metalness: .55, transparent: true, opacity: .8 }),
     carGlass: new THREE.MeshStandardMaterial({ color: '#9fa9bb', roughness: .15, metalness: .45 }),
+    person: new THREE.MeshStandardMaterial({ color: '#9fa9bb', roughness: .3, metalness: .4 }),
     door: new THREE.MeshStandardMaterial({ color: '#313134', roughness: .45, metalness: .25 }),
     doorRib: new THREE.MeshStandardMaterial({ color: '#2a2b2f', roughness: .4, metalness: .3 }),
     doorPanel: new THREE.MeshStandardMaterial({ color: '#3a3b40', roughness: .38, metalness: .3 }),
@@ -59,7 +60,7 @@ export function create(host, opts = {}) {
     tree: new THREE.MeshStandardMaterial({ color: '#eef0f3', roughness: .95 }),
     water: new THREE.MeshStandardMaterial({ color: '#7d93fb', roughness: .2, transparent: true, opacity: .25, depthWrite: false }),
     waterTop: new THREE.MeshStandardMaterial({ color: '#728AFB', roughness: .06, metalness: .1, transparent: true, opacity: .13, depthWrite: false }),
-    seal: new THREE.MeshBasicMaterial({ color: '#728AFB', transparent: true, opacity: 0 }),
+    seal: new THREE.MeshBasicMaterial({ color: '#728AFB', transparent: true, opacity: 0, depthWrite: false }),
     edge: new THREE.LineBasicMaterial({ color: '#8a8ea0', transparent: true, opacity: .45 }),
     waterEdge: new THREE.LineBasicMaterial({ color: '#4a5fd0', transparent: true, opacity: .85 })
   };
@@ -146,14 +147,15 @@ export function create(host, opts = {}) {
   box(G.x0, DR.x0, 0, G.h, G.z1 - G.t, G.z1, cutMats);                              // pilar izq.
   box(DR.x1, G.x1, 0, G.h, G.z1 - G.t, G.z1, cutMats);                    // pilar der. (cortado)
   box(DR.x0, DR.x1, DR.h, G.h, G.z1 - G.t, G.z1, cutMats);                          // dintel
-  box(G.x0 + .02, G.x1, -.01, .015, G.z0 + G.t, G.z1 - G.t, M.white, root, false); // piso interior
+  box(G.x0 + .02, G.x1 - .01, .002, .02, G.z0 + G.t + .01, G.z1 - G.t - .01, M.white, root, false); // piso interior
   // pretil terraza
   // puerta AquaLOCK: marco, hoja con paneles redondeados, tirador, umbral y placa
   const zd = G.z1 - .14;
   const fw = .09;   // marco de aluminio
-  [[DR.x0 - fw, DR.x0, 0, DR.h + fw], [DR.x1, DR.x1 + fw, 0, DR.h + fw], [DR.x0, DR.x1, DR.h, DR.h + fw]].forEach(b =>
+  const fi = .015;
+  [[DR.x0 - fw, DR.x0 + fi, .002, DR.h + fw], [DR.x1 - fi, DR.x1 + fw, .002, DR.h + fw], [DR.x0 + fi, DR.x1 - fi, DR.h - fi, DR.h + fw]].forEach(b =>
     rbox(b[0], b[1], b[2], b[3], G.z1 - .2, G.z1 + .035, .015, M.frame));
-  box(DR.x0, DR.x1, 0, DR.h, zd - .05, zd, M.door, root, false);
+  box(DR.x0 + .02, DR.x1 - .02, .004, DR.h - .02, zd - .05, zd, M.door, root, false);
   const np = 5, gap = .035, ph = (DR.h - .08 - gap * (np - 1)) / np;
   for (let i = 0; i < np; i++) {
     const y0 = .04 + i * (ph + gap);
@@ -161,7 +163,7 @@ export function create(host, opts = {}) {
     rbox(DR.x0 + .07, DR.x1 - .07, y0 + ph * .5 - .006, y0 + ph * .5 + .006, zd + .03, zd + .04, .004, M.doorRib);
   }
   rbox((DR.x0 + DR.x1) / 2 - .22, (DR.x0 + DR.x1) / 2 + .22, .95, 1.0, zd + .035, zd + .085, .02, M.metal);
-  rbox(DR.x0 - .12, DR.x1 + .12, 0, .035, G.z1 - .2, G.z1 + .14, .012, M.metal);          // umbral
+  rbox(DR.x0 - .12, DR.x1 + .12, .003, .038, G.z1 - .19, G.z1 + .14, .012, M.metal);          // umbral
   {
     const cv = document.createElement('canvas'); cv.width = 512; cv.height = 128;
     const x = cv.getContext('2d'); x.fillStyle = '#26272b'; x.fillRect(0, 0, 512, 128);
@@ -173,9 +175,9 @@ export function create(host, opts = {}) {
   }
   // sello perimetral (se ilumina)
   const sealG = new THREE.Group(); root.add(sealG);
-  const sw = .05, sz = G.z1 + .045;
-  [[DR.x0 - fw - sw, DR.x0 - fw, 0, DR.h + fw + sw], [DR.x1 + fw, DR.x1 + fw + sw, 0, DR.h + fw + sw], [DR.x0 - fw - sw, DR.x1 + fw + sw, DR.h + fw, DR.h + fw + sw], [DR.x0 - .12, DR.x1 + .12, .036, .05]].forEach(b => {
-    const m = new THREE.Mesh(new THREE.BoxGeometry(b[1] - b[0], b[3] - b[2], .02), M.seal);
+  const sw = .05, sz = G.z1 + .05;
+  [[DR.x0 - fw - sw, DR.x0 - fw, 0, DR.h + fw + sw], [DR.x1 + fw, DR.x1 + fw + sw, 0, DR.h + fw + sw], [DR.x0 - fw - sw, DR.x1 + fw + sw, DR.h + fw, DR.h + fw + sw], [DR.x0 - .12, DR.x1 + .12, .04, .054]].forEach(b => {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(b[1] - b[0], b[3] - b[2], .01), M.seal); m.renderOrder = 4;
     m.position.set((b[0] + b[1]) / 2, (b[2] + b[3]) / 2, sz); sealG.add(m);
   });
 
@@ -216,7 +218,7 @@ export function create(host, opts = {}) {
 
   /* ---------------- persona (figura de maqueta) ---------------- */
   function person() {
-    const g = new THREE.Group(), m = M.white;
+    const g = new THREE.Group(), m = M.person;
     const cap = (r, len, x, y, z, rz = 0, sx = 1) => {
       const k = new THREE.Mesh(new THREE.CapsuleGeometry(r, len, 8, 20), m);
       k.position.set(x, y, z); k.rotation.z = rz; k.scale.z = sx; g.add(k); return k;
@@ -261,7 +263,7 @@ export function create(host, opts = {}) {
   scene.add(sun, sun.target);
 
   /* ---------------- cámara ---------------- */
-  const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, -100, 200);
+  const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 25, 100);
   const qs = new URLSearchParams(location.search);
   const v3 = new THREE.Vector3();
   const TARGET = new THREE.Vector3(...(qs.get('target') || '1.4,2.0,-1.2').split(',').map(Number));
@@ -397,7 +399,7 @@ export function create(host, opts = {}) {
     nTex.offset.set(t * .03, t * .018);
     // sello
     const glow = eo(seg(t, 5.7, 6.4)) * (1 - eio(seg(t, 8.6, 9.2)));
-    M.seal.opacity = .95 * glow;
+    M.seal.opacity = .95 * glow; sealG.visible = glow > .002;
 
     renderer.render(scene, cam);
 
